@@ -14,7 +14,8 @@
     "frameworks": "Arduino",
     "platforms": "espressif8266",
     "build": {
-        "flags": "-DMBEDTLS_CONFIG_FILE='<config-psk.h>'",
+        "__flags": "-Iinclude -DMBEDTLS_CONFIG_FILE='<config-psk.h>'",
+        "__lib_compat_mode": "off",
         "__includeDir": "mbedtls/include, include",
         "__srcDir": "mbedtls/library"
     },
@@ -23,7 +24,10 @@
             "name": "ArduinoLog"
         },
         {
-            "name": "mbedtls"
+            "name": "mbedtls-psk"
+        },
+        {
+            "name": "ESP8266WiFi"
         }
     ]
 }
