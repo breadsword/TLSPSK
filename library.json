@@ -1,0 +1,24 @@
+{
+    "name": "WiFiClientPSK",
+    "version": "0.5",
+    "description": "WiFi Client implementation that supports TLS-PSK for ESP8266 based on mbedtls",
+    "keywords": "tls, mbedtls, psk",
+    "Authors": {
+        "name": "Andreas Pfeil"
+    },
+    "Repository": {
+        "type": "git",
+        "url": "https://github.com/breadsword/WiFiClientPSK.git"
+    },
+    "license": "LGPL-3.0-or-later",
+    "frameworks": "Arduino",
+    "platforms": "espressif8266",
+    "build": {
+        "flags": "-DMBEDTLS_CONFIG_FILE='<config-psk.h>'",
+        "__includeDir": "mbedtls/include, include",
+        "__srcDir": "mbedtls/library"
+    },
+    "dependencies": {
+        "name": "ArduinoLog"
+    }
+}
