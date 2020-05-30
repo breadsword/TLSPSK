@@ -18,7 +18,12 @@
         "__includeDir": "mbedtls/include, include",
         "__srcDir": "mbedtls/library"
     },
-    "dependencies": {
-        "name": "ArduinoLog"
-    }
+    "dependencies": [
+        {
+            "name": "ArduinoLog"
+        },
+        {
+            "name": "mbedtls"
+        }
+    ]
 }
