@@ -4,7 +4,7 @@
 
 #include "loghelpers.h"
 #include <ArduinoLog.h>
-#include "wifipskclient.h"
+#include "wificlientpsk.h"
 
 constexpr char message[] = "Hello, this is a message with some characters.\n";
 const uint8_t *bmsg = reinterpret_cast<const uint8_t *const>(message);
