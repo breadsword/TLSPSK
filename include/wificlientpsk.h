@@ -5,31 +5,37 @@
 
 #include "wifipsk.h"
 
-class WiFiPSKClient : private WiFiClient
+class WiFiClientPSK : private WiFiClient
 {
 public:
-    typedef std::vector<unsigned char> psk_t;
+    constexpr static auto keylen_bits = 128;
+    typedef std::array<unsigned char, keylen_bits / 8> psk_t;
 
-    WiFiPSKClient(
+    WiFiClientPSK(
         const std::string &_psk_id, const psk_t &_psk,
         const std::string &_pers = "");
-    virtual ~WiFiPSKClient();
-    WiFiPSKClient(const WiFiPSKClient &) = delete;
-    WiFiPSKClient &operator=(const WiFiPSKClient &) = delete;
-    WiFiPSKClient(WiFiPSKClient &&) = delete;
-    WiFiPSKClient &operator=(WiFiPSKClient &&) = delete;
+    virtual ~WiFiClientPSK();
+    WiFiClientPSK(const WiFiClientPSK &) = delete;
+    WiFiClientPSK &operator=(const WiFiClientPSK &) = delete;
+    WiFiClientPSK(WiFiClientPSK &&) = delete;
+    WiFiClientPSK &operator=(WiFiClientPSK &&) = delete;
 
     virtual int connect(IPAddress ip, uint16_t port) override;
     using WiFiClient::connect;
 
     virtual size_t write(const uint8_t *buf, size_t size) override;
+    virtual size_t write(const uint8_t) override;
 
     virtual int read(uint8_t *buf, size_t size) override;
+    virtual int read() override;
 
     size_t writeraw(const uint8_t *buf, size_t size);
     int readraw(uint8_t *buf, size_t size, uint32_t timeout_ms);
 
+    using WiFiClient::available;
     using WiFiClient::connected;
+    using WiFiClient::flush;
+    using WiFiClient::stop;
 
     static constexpr uint32_t ssl_timeout = 2000;
 
@@ -44,7 +50,7 @@ private:
 
     // Pre-shared key information
     const std::string psk_id;
-    psk_t psk;
+    const psk_t m_psk;
 
     /// write at least some bytes
     int tls_write_some(const unsigned char *buf, size_t len);
