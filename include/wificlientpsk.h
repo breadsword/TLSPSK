@@ -5,7 +5,7 @@
 #include <string>
 
 #include <client.h>
-#include "tlspsk.h"
+#include "tlspsk_raii.h"
 
 class TLSPSKConnection
 {
