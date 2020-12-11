@@ -5,7 +5,7 @@
 #include <string>
 
 #include <client.h>
-#include "wifipsk.h"
+#include "tlspsk.h"
 
 class TLSPSKConnection
 {
@@ -32,14 +32,16 @@ public:
 
     static constexpr uint32_t ssl_timeout = 2000;
 
-    size_t writeraw(const uint8_t *buf, size_t size);
-    int readraw(uint8_t *buf, size_t size, uint32_t timeout_ms);
-
 private:
     tlspsk::entropy_ctx entropy;
     tlspsk::ctr_drbg_ctx ctr_drbg;
     tlspsk::ssl_conf_ctx conf;
     tlspsk::ssl_ctx ssl;
+
+    static int tls_read_timeout(void *ctx, uint8_t *buf, size_t len, uint32_t timeout);
+    static int tls_write(void *ctx, const uint8_t *buf, size_t len);
+    size_t writeraw(const uint8_t *buf, size_t size);
+    int readraw(uint8_t *buf, size_t size, uint32_t timeout_ms);
 
     Client &client;
 

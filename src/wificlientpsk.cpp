@@ -15,18 +15,6 @@ namespace
         return std::string(msg_buf);
     }
 
-    int tls_read_timeout(void *ctx, uint8_t *buf, size_t len, uint32_t timeout)
-    {
-        TLSPSKConnection *cl = reinterpret_cast<TLSPSKConnection *>(ctx);
-        return cl->readraw(buf, len, timeout);
-    }
-
-    int tls_write(void *ctx, const uint8_t *buf, size_t len)
-    {
-        TLSPSKConnection *cl = reinterpret_cast<TLSPSKConnection *>(ctx);
-        return cl->writeraw(buf, len);
-    }
-
 }; // namespace
 
 TLSPSKConnection::TLSPSKConnection(
@@ -120,7 +108,7 @@ int TLSPSKConnection::connect()
     }
 
     // hook up read / write functions
-    mbedtls_ssl_set_bio(&ssl.m_ssl, (void *)this, tls_write, NULL, tls_read_timeout);
+    mbedtls_ssl_set_bio(&ssl.m_ssl, (void *)this, TLSPSKConnection::tls_write, NULL, TLSPSKConnection::tls_read_timeout);
     Log.verbose("set BIO");
     // reset session here, as we may have a stall session when the other side has reset and we are reconnecting.
     mbedtls_ssl_session_reset(&ssl.m_ssl);
@@ -136,6 +124,18 @@ int TLSPSKConnection::connect()
 
     // 1 means successfully connected
     return 1;
+}
+
+int TLSPSKConnection::tls_read_timeout(void *ctx, uint8_t *buf, size_t len, uint32_t timeout)
+{
+    TLSPSKConnection *cl = reinterpret_cast<TLSPSKConnection *>(ctx);
+    return cl->readraw(buf, len, timeout);
+}
+
+int TLSPSKConnection::tls_write(void *ctx, const uint8_t *buf, size_t len)
+{
+    TLSPSKConnection *cl = reinterpret_cast<TLSPSKConnection *>(ctx);
+    return cl->writeraw(buf, len);
 }
 
 int TLSPSKConnection::setup_ssl()
