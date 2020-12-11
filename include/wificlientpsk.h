@@ -10,8 +10,9 @@
 class TLSPSKConnection
 {
 public:
-    constexpr static auto keylen_bits = 128;
+    static constexpr auto keylen_bits = 128;
     typedef std::array<unsigned char, keylen_bits / 8> psk_t;
+    static constexpr uint32_t ssl_timeout = 2000;
 
     TLSPSKConnection(
         Client &_client,
@@ -29,8 +30,6 @@ public:
 
     size_t write(const uint8_t *buf, size_t size);
     int read(uint8_t *buf, size_t size);
-
-    static constexpr uint32_t ssl_timeout = 2000;
 
 private:
     tlspsk::entropy_ctx entropy;
