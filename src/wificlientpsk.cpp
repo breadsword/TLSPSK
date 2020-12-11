@@ -17,20 +17,20 @@ namespace
 
     int tls_read_timeout(void *ctx, uint8_t *buf, size_t len, uint32_t timeout)
     {
-        WiFiClientPSK *cl = reinterpret_cast<WiFiClientPSK *>(ctx);
+        TLSPSKConnection *cl = reinterpret_cast<TLSPSKConnection *>(ctx);
         return cl->readraw(buf, len, timeout);
     }
 
     int tls_write(void *ctx, const uint8_t *buf, size_t len)
     {
-        WiFiClientPSK *cl = reinterpret_cast<WiFiClientPSK *>(ctx);
+        TLSPSKConnection *cl = reinterpret_cast<TLSPSKConnection *>(ctx);
         return cl->writeraw(buf, len);
     }
 
 }; // namespace
 
-WiFiClientPSK::WiFiClientPSK(
-    const std::string &_psk_id, const psk_t &_psk, const std::string &_pers) : pers{_pers}, psk_id{_psk_id}, m_psk(_psk)
+TLSPSKConnection::TLSPSKConnection(
+    Client &_client, const std::string &_psk_id, const psk_t &_psk, const std::string &_pers) : client(_client), pers{_pers}, psk_id{_psk_id}, m_psk(_psk)
 {
     if (setup_ssl() != 0)
     {
@@ -38,25 +38,14 @@ WiFiClientPSK::WiFiClientPSK(
     }
 }
 
-WiFiClientPSK::~WiFiClientPSK()
-{
-}
-
-size_t WiFiClientPSK::write(const uint8_t *buf, size_t size)
+size_t TLSPSKConnection::write(const uint8_t *buf, size_t size)
 {
     const auto r = mbedtls_ssl_write(&ssl.m_ssl, buf, size);
     Log.verbose("Wrote %d bytes clear text", r);
     return r;
 }
 
-size_t WiFiClientPSK::write(const uint8_t c)
-{
-    const auto r = mbedtls_ssl_write(&ssl.m_ssl, &c, 1);
-    Log.verbose("Wrote 1 byte clear text. r: %d", r);
-    return r;
-}
-
-int WiFiClientPSK::read(uint8_t *buf, size_t size)
+int TLSPSKConnection::read(uint8_t *buf, size_t size)
 {
     const auto r = mbedtls_ssl_read(&ssl.m_ssl, buf, size);
     if (r > 0)
@@ -70,32 +59,17 @@ int WiFiClientPSK::read(uint8_t *buf, size_t size)
     return r;
 }
 
-int WiFiClientPSK::read()
+size_t TLSPSKConnection::writeraw(const uint8_t *buf, size_t size)
 {
-    if (!available())
-    {
-        return -1;
-    }
-    else
-    {
-        unsigned char c = 0;
-        const auto r = mbedtls_ssl_read(&ssl.m_ssl, &c, 1);
-        Log.verbose("Read 1 byte clear text. r: %d", r);
-        return c;
-    }
-}
-
-size_t WiFiClientPSK::writeraw(const uint8_t *buf, size_t size)
-{
-    const auto r = WiFiClient::write(buf, size);
+    const auto r = client.write(buf, size);
     return r;
 }
 
-int WiFiClientPSK::readraw(uint8_t *buf, size_t size, uint32_t timeout_ms)
+int TLSPSKConnection::readraw(uint8_t *buf, size_t size, uint32_t timeout_ms)
 {
     // Log.verbose("read timeout: %d ms", timeout_ms);
     const auto begin = millis();
-    while (!available() && connected())
+    while (!client.available() && client.connected())
     {
         const auto waiting_time = millis() - begin;
         if ((timeout_ms != 0) && (waiting_time > timeout_ms))
@@ -106,16 +80,13 @@ int WiFiClientPSK::readraw(uint8_t *buf, size_t size, uint32_t timeout_ms)
         }
         // waiting with implicit background processing
         yield();
-
-        // Log.verbose("Waiting for read. Waiting_time: %d, timeout: %d", waiting_time, timeout_ms);
-        // delay(200);
     }
 
-    const auto r = WiFiClient::read(buf, size);
+    const auto r = client.read(buf, size);
     return r;
 }
 
-int WiFiClientPSK::ssl_handshake()
+int TLSPSKConnection::ssl_handshake()
 {
     // Log.verbose("Attempting Handshake");
     auto ret = -1;
@@ -134,17 +105,19 @@ int WiFiClientPSK::ssl_handshake()
     return ret;
 }
 
-int WiFiClientPSK::connect(IPAddress ip, uint16_t port)
+bool TLSPSKConnection::available()
 {
-    if (0 == WiFiClient::connect(ip, port))
-    {
-        // 0 means error
-        Log.error("TCP Connection failed.");
-        return 0;
-    }
-    Log.verbose("TCP connect success");
+    return (client.available() || (mbedtls_ssl_get_bytes_avail(&ssl.m_ssl)));
+}
 
+int TLSPSKConnection::connect()
+{
     // we are TCP connected
+    if (!client.connected())
+    {
+        Log.error("TLS connection needs a TCP connection first.");
+        return -1;
+    }
 
     // hook up read / write functions
     mbedtls_ssl_set_bio(&ssl.m_ssl, (void *)this, tls_write, NULL, tls_read_timeout);
@@ -156,7 +129,7 @@ int WiFiClientPSK::connect(IPAddress ip, uint16_t port)
     if (ssl_handshake() != 0)
     {
         Log.error("SSL Handshake failed.");
-        WiFiClient::stop();
+        client.stop();
 
         return 0;
     }
@@ -165,7 +138,7 @@ int WiFiClientPSK::connect(IPAddress ip, uint16_t port)
     return 1;
 }
 
-int WiFiClientPSK::setup_ssl()
+int TLSPSKConnection::setup_ssl()
 {
     {
         const auto r = mbedtls_ctr_drbg_seed(&ctr_drbg.m_ctr_drbg, mbedtls_entropy_func, &entropy.m_entropy,
