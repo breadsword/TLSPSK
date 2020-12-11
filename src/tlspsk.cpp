@@ -1,7 +1,5 @@
 #include <tlspsk.h>
-
 #include <ArduinoLog.h>
-
 #include <mbedtls/error.h>
 
 namespace
@@ -18,9 +16,9 @@ namespace
 }; // namespace
 
 TLSPSKConnection::TLSPSKConnection(
-    Client &_client, const std::string &_psk_id, const psk_t &_psk, const std::string &_pers) : client(_client), pers{_pers}, psk_id{_psk_id}, m_psk(_psk)
+    Client &_client, const std::string _psk_id, psk_t _psk, const std::string _pers) : client(_client)
 {
-    if (setup_ssl() != 0)
+    if (setup_ssl(_pers, _psk_id, _psk) != 0)
     {
         Log.fatal("Could not set up SSL!");
     }
@@ -138,11 +136,11 @@ int TLSPSKConnection::tls_write(void *ctx, const uint8_t *buf, size_t len)
     return cl->writeraw(buf, len);
 }
 
-int TLSPSKConnection::setup_ssl()
+int TLSPSKConnection::setup_ssl(string_t pers, string_t psk_id, psk_t psk)
 {
     {
         const auto r = mbedtls_ctr_drbg_seed(&ctr_drbg.m_ctr_drbg, mbedtls_entropy_func, &entropy.m_entropy,
-                                             reinterpret_cast<const unsigned char *>(pers.c_str()), pers.length());
+                                             reinterpret_cast<const unsigned char *>(pers.data()), pers.size_bytes());
         if (r != 0)
         {
             Log.error(("Could not set up ctr drbg seed: " + mbedtls_error_msg(r)).c_str());
@@ -164,9 +162,9 @@ int TLSPSKConnection::setup_ssl()
     mbedtls_ssl_conf_rng(&conf.m_config, mbedtls_ctr_drbg_random, &ctr_drbg);
 
     {
-        Log.verbose("size of psk: %d", sizeof(m_psk));
-        const auto r = mbedtls_ssl_conf_psk(&conf.m_config, m_psk.data(), sizeof(m_psk),
-                                            reinterpret_cast<const unsigned char *>(psk_id.c_str()), psk_id.length());
+        Log.verbose("size of psk: %d", psk.size_bytes());
+        const auto r = mbedtls_ssl_conf_psk(&conf.m_config, psk.data(), psk.size_bytes(),
+                                            reinterpret_cast<const unsigned char *>(psk_id.data()), psk_id.size_bytes());
         if (r != 0)
         {
             Log.error(("Could not configure psk: " + mbedtls_error_msg(r)).c_str());
