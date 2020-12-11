@@ -5,7 +5,7 @@
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 
-namespace wifipsk
+namespace tlspsk
 {
     struct ctr_drbg_ctx
     {
@@ -34,6 +34,6 @@ namespace wifipsk
         ssl_ctx();
         ~ssl_ctx();
     };
-}; // namespace wifipsk
+}; // namespace tlspsk
 
 #endif //WIFIPSK_H_INCLUDED
