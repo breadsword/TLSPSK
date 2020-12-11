@@ -16,7 +16,7 @@ namespace
 }; // namespace
 
 TLSPSKConnection::TLSPSKConnection(
-    Client &_client, const std::string _psk_id, psk_t _psk, const std::string _pers) : client(_client)
+    Client &_client, const std::string _psk_id, cbuf_t _psk, const std::string _pers) : client(_client)
 {
     if (setup_ssl(_pers, _psk_id, _psk) != 0)
     {
@@ -24,11 +24,21 @@ TLSPSKConnection::TLSPSKConnection(
     }
 }
 
+size_t TLSPSKConnection::write(cbuf_t buf)
+{
+    return write(buf.data(), buf.size_bytes());
+}
+
 size_t TLSPSKConnection::write(const uint8_t *buf, size_t size)
 {
     const auto r = mbedtls_ssl_write(&ssl.m_ssl, buf, size);
     Log.verbose("Wrote %d bytes clear text", r);
     return r;
+}
+
+int TLSPSKConnection::read(buf_t b)
+{
+    return read(b.data(), b.size_bytes());
 }
 
 int TLSPSKConnection::read(uint8_t *buf, size_t size)
@@ -136,7 +146,7 @@ int TLSPSKConnection::tls_write(void *ctx, const uint8_t *buf, size_t len)
     return cl->writeraw(buf, len);
 }
 
-int TLSPSKConnection::setup_ssl(string_t pers, string_t psk_id, psk_t psk)
+int TLSPSKConnection::setup_ssl(string_t pers, string_t psk_id, cbuf_t psk)
 {
     {
         const auto r = mbedtls_ctr_drbg_seed(&ctr_drbg.m_ctr_drbg, mbedtls_entropy_func, &entropy.m_entropy,

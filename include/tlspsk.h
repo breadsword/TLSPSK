@@ -11,13 +11,15 @@ class TLSPSKConnection
 {
 public:
     static constexpr auto keylen_bits = 128;
-    typedef gsl::span<const uint8_t> psk_t;
+    typedef gsl::span<const uint8_t> cbuf_t;
+    typedef gsl::span<uint8_t> buf_t;
     typedef gsl::span<const char> string_t;
+
     static constexpr uint32_t ssl_timeout = 2000;
 
     TLSPSKConnection(
         Client &_client,
-        const std::string _psk_id, psk_t _psk,
+        const std::string _psk_id, cbuf_t _psk,
         const std::string _pers = "");
 
     // forbid copying
@@ -30,7 +32,9 @@ public:
     bool available();
 
     size_t write(const uint8_t *buf, size_t size);
+    size_t write(cbuf_t);
     int read(uint8_t *buf, size_t size);
+    int read(buf_t);
 
 private:
     tlspsk::entropy_ctx entropy;
@@ -49,7 +53,7 @@ private:
     int tls_write_some(const unsigned char *buf, size_t len);
 
     // set up the environment for ssl connection (entropy, rngs, config, ciphers, keys)
-    int setup_ssl(string_t pers, string_t psk_id, psk_t psk);
+    int setup_ssl(string_t pers, string_t psk_id, cbuf_t psk);
     // make connection between actual socket and ssl machinery, perform handshake
     int ssl_handshake();
 };
