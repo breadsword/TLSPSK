@@ -1,7 +1,7 @@
 {
-    "name": "WiFiClientPSK",
-    "version": "0.5",
-    "description": "WiFi Client implementation that supports TLS-PSK for ESP8266 based on mbedtls",
+    "name": "TLSPSK",
+    "version": "1.0",
+    "description": "TLS-PSK implementation based on mbedtls, usable for ESP8266",
     "keywords": "tls, mbedtls, psk",
     "Repository": {
         "type": "git",
@@ -19,9 +19,6 @@
         },
         {
             "name": "mbedtls-psk"
-        },
-        {
-            "name": "ESP8266WiFi"
         }
     ]
 }
