@@ -15,6 +15,8 @@
   Please configure your server hostname below either as DNS name or as IP address.
 
 */
+constexpr uint8_t psk_secret[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+constexpr char psk_identity[] = "psk_test";
 
 constexpr char message[] = "Hello, this is a message with some characters.\n";
 const uint8_t *bmsg = reinterpret_cast<const uint8_t *const>(message);
@@ -23,6 +25,9 @@ constexpr auto msglen = sizeof(message);
 constexpr auto BAUDRATE = 115200;
 constexpr char server[] = "192.168.188.22"/* "your server here" */;
 constexpr uint16_t port = 27549;
+
+WiFiClient wifi;
+TLSPSKConnection tls{wifi, psk_identity, psk_secret};
 
 void printTimestamp(Print *_logOutput)
 {
@@ -55,11 +60,6 @@ void setup()
   WiFiManager manager;
   manager.autoConnect("testhostAP");
 }
-
-WiFiClient wifi;
-constexpr uint8_t psk_secret[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-constexpr char psk_identity[] = "psk_test";
-TLSPSKConnection tls{wifi, psk_identity, psk_secret};
 
 void loop()
 {
