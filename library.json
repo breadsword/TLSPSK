@@ -1,6 +1,6 @@
 {
     "name": "TLSPSK",
-    "version": "1.0",
+    "version": "1.0a",
     "description": "TLS-PSK implementation based on mbedtls, usable for ESP8266",
     "keywords": "tls, mbedtls, psk",
     "Repository": {
@@ -16,6 +16,9 @@
     "dependencies": [
         {
             "name": "mbedtls-psk"
+        },
+        {
+            "name": "gsl-lite"
         }
     ]
 }
